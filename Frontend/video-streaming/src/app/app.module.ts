@@ -7,6 +7,7 @@ import { HTTP_INTERCEPTORS,HttpClientModule } from '@angular/common/http';
 import { NgxFileDropModule } from 'ngx-file-drop';
 import { UploadVideoComponent } from './upload-video/upload-video.component';
 import {MatButtonModule} from "@angular/material/button";
+import {HeaderComponent} from './header/header.component'
 
 @NgModule({
 
@@ -19,7 +20,7 @@ import {MatButtonModule} from "@angular/material/button";
     HttpClientModule,
     NgxFileDropModule,
     MatButtonModule,
-    
+    HeaderComponent
   ]
 })
 export class AppModule {}

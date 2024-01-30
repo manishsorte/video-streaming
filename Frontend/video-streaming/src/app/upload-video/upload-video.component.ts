@@ -15,8 +15,7 @@ import {
   standalone: true,
   imports: [NgxFileDropModule, CommonModule],
   templateUrl: './upload-video.component.html',
-  styleUrl: './upload-video.component.css',
-  providers:[VideoService]
+  styleUrl: './upload-video.component.css'
 })
 export class UploadVideoComponent {
   public files: NgxFileDropEntry[] = [];
