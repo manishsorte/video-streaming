@@ -3,6 +3,9 @@ package com.video.streaming.service;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.video.streaming.exceptions.FileDownloadException;
+import com.video.streaming.model.Video;
+import com.video.streaming.model.VideoDto;
+import com.video.streaming.repository.VideoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -24,37 +27,10 @@ import java.util.Objects;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class FileServiceImpl implements FileService{
+public class FileServiceImpl implements FileService {
+    private final AmazonS3 s3Client;
     @Value("${aws.bucket.name}")
     private String bucketName;
-
-    private final AmazonS3 s3Client;
-
-    @Override
-    public String uploadFile(MultipartFile multipartFile) throws IOException {
-        // converting multipart file  to a file
-        File file = new File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
-        try (FileOutputStream fileOutputStream = new FileOutputStream(file)){
-            fileOutputStream.write(multipartFile.getBytes());
-        }
-
-        // generating file name
-        String fileName = generateFileName(multipartFile);
-
-        // uploading file to S3
-        PutObjectRequest request = new PutObjectRequest(bucketName, fileName, file);
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType("plain/"+ FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
-        metadata.addUserMetadata("Title", "File Upload - " + fileName);
-        metadata.setContentLength(file.length());
-        request.setMetadata(metadata);
-        s3Client.putObject(request);
-
-        // delete file
-        file.delete();
-
-        return fileName;
-    }
 
     @Override
     public Object downloadFile(String fileName) throws FileDownloadException, IOException {
@@ -93,14 +69,11 @@ public class FileServiceImpl implements FileService{
 
     private boolean bucketIsEmpty() {
         ListObjectsV2Result result = s3Client.listObjectsV2(this.bucketName);
-        if (result == null){
+        if (result == null) {
             return false;
         }
         List<S3ObjectSummary> objects = result.getObjectSummaries();
         return objects.isEmpty();
     }
 
-    private String generateFileName(MultipartFile multiPart) {
-        return new Date().getTime() + "-" + multiPart.getOriginalFilename().replace(" ", "_");
-    }
 }

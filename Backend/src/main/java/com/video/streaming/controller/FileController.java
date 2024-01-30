@@ -3,10 +3,13 @@ package com.video.streaming.controller;
 import com.video.streaming.exceptions.FileDownloadException;
 import com.video.streaming.exceptions.FileEmptyException;
 import com.video.streaming.exceptions.FileUploadException;
+import com.video.streaming.model.VideoDto;
 import com.video.streaming.responses.APIResponse;
 import com.video.streaming.service.FileService;
+import com.video.streaming.service.VideoService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.http.HttpHeaders;
@@ -25,14 +28,11 @@ import java.util.Objects;
 @RestController
 @Slf4j
 @RequestMapping("/api/v1/file")
+@RequiredArgsConstructor
 @Validated
 public class FileController {
     private final FileService fileService;
-
-
-    public FileController(FileService fileUploadService) {
-        this.fileService = fileUploadService;
-    }
+    private final VideoService videoService;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile multipartFile) throws FileEmptyException, FileUploadException, IOException {
@@ -43,7 +43,7 @@ public class FileController {
         List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("mp4","png", "jpg", "jpeg"));
 
         if (isValidFile && allowedFileExtensions.contains(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))){
-            String fileName = fileService.uploadFile(multipartFile);
+            String fileName = videoService.uploadFile(multipartFile);
             APIResponse apiResponse = APIResponse.builder()
                     .message("file uploaded successfully. File unique name =>" + fileName)
                     .isSuccessful(true)
@@ -88,6 +88,11 @@ public class FileController {
                     .statusCode(404).build();
             return new ResponseEntity<>("file does not exist", HttpStatus.NOT_FOUND);
         }
+    }
+    @PutMapping("/edit")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public VideoDto editVideoDetails(@RequestBody VideoDto videoDto){
+        return videoService.editVideoMetaData(videoDto);
     }
 
     private boolean isValidFile(MultipartFile multipartFile){
