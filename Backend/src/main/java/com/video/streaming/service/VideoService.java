@@ -52,7 +52,16 @@ public class VideoService {
 
         return fileName;
     }
-    public VideoDto editVideoMetaData(VideoDto videoDetails) {
+
+    public String uploadThumbnail(MultipartFile file, String videoId) throws IOException {
+        Video retrievedVideo = getVideoById(videoId);
+        String fileName = uploadFile(file);
+        retrievedVideo.setThumbnailUrl(fileName);
+        videoRepository.save(retrievedVideo);
+        return fileName;
+    }
+
+    public Video editVideoMetaData(VideoDto videoDetails) {
         //retrieving file from database
         Video retrievedVideo = getVideoById(videoDetails.getId());
         //updating video details
@@ -62,7 +71,7 @@ public class VideoService {
         retrievedVideo.setThumbnailUrl(videoDetails.getThumbnailUrl());
         retrievedVideo.setVideoStatus(videoDetails.getVideoStatus());
         videoRepository.save(retrievedVideo);
-        return videoDetails;
+        return retrievedVideo;
     }
 
     Video getVideoById(String videoId) {
