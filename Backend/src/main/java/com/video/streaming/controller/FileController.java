@@ -40,7 +40,7 @@ public class FileController {
             throw new FileEmptyException("File is empty. Cannot save an empty file");
         }
         boolean isValidFile = isValidFile(multipartFile);
-        List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("pdf", "txt", "epub", "csv", "png", "jpg", "jpeg", "srt"));
+        List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("mp4","png", "jpg", "jpeg"));
 
         if (isValidFile && allowedFileExtensions.contains(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))){
             String fileName = fileService.uploadFile(multipartFile);
