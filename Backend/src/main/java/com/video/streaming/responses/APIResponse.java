@@ -8,8 +8,9 @@ import lombok.Data;
 @Data
 @Builder
 public class APIResponse {
+    private String id;
+    private String url;
     private String message;
-    private boolean isSuccessful;
     private int statusCode;
-    private Object data;
+    private boolean isSuccessful;
 }

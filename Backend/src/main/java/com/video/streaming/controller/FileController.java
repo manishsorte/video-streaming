@@ -1,5 +1,6 @@
 package com.video.streaming.controller;
 
+import com.video.streaming.Constants.Constants;
 import com.video.streaming.exceptions.FileDownloadException;
 import com.video.streaming.exceptions.FileEmptyException;
 import com.video.streaming.model.Video;
@@ -36,49 +37,41 @@ public class FileController {
 
     @PostMapping("/upload/video")
     public ResponseEntity<?> uploadVideo(@RequestParam("video") MultipartFile multipartFile) throws FileEmptyException, IOException {
-        if (multipartFile.isEmpty()){
-            throw new FileEmptyException("File is empty. Cannot save an empty file");
+        if (multipartFile.isEmpty()) {
+            throw new FileEmptyException(Constants.FILE_IS_EMPTY);
         }
         boolean isValidFile = isValidFile(multipartFile);
-        List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("mp4","png", "jpg", "jpeg"));
-        return uploadFiles(isValidFile,multipartFile,allowedFileExtensions);
+        List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("mp4", "png", "jpg", "jpeg"));
+        return uploadFiles(isValidFile, multipartFile, allowedFileExtensions);
     }
 
     @PostMapping("/upload/thumbnail")
     public ResponseEntity<?> uploadThumbnail(@RequestParam("thumbnail") MultipartFile multipartFile, String videoId) throws FileEmptyException, IOException {
-        if (multipartFile.isEmpty()){
-            throw new FileEmptyException("File is empty. Cannot save an empty file");
+        if (multipartFile.isEmpty()) {
+            throw new FileEmptyException(Constants.FILE_IS_EMPTY);
         }
         boolean isValidFile = isValidFile(multipartFile);
         List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg"));
-        if (isValidFile && allowedFileExtensions.contains(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))){
-            String thumbnailUrl = videoService.uploadThumbnail(multipartFile, videoId);
-            APIResponse apiResponse = APIResponse.builder()
-                    .message("file uploaded successfully. File unique name =>" + thumbnailUrl)
-                    .isSuccessful(true)
-                    .statusCode(200)
-                    .build();
+        if (isValidFile && allowedFileExtensions.contains(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))) {
+            APIResponse apiResponse = videoService.uploadThumbnail(multipartFile, videoId);
             return new ResponseEntity<>(apiResponse, HttpStatus.OK);
         } else {
-            APIResponse apiResponse = APIResponse.builder()
-                    .message("Invalid File. File extension or File name is not supported")
-                    .isSuccessful(false)
-                    .statusCode(400)
-                    .build();
+            APIResponse apiResponse = new APIResponse(null, null,Constants.INVALID_FILE,
+                    400, false);
             return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/video/edit")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Video editVideoDetails(@RequestBody VideoDto videoDto){
+    public Video editVideoDetails(@RequestBody VideoDto videoDto) {
         return videoService.editVideoMetaData(videoDto);
     }
 
     @GetMapping("/download")
-    public ResponseEntity<?> downloadFile(@RequestParam("fileName")  @NotBlank @NotNull String fileName) throws FileDownloadException, IOException {
+    public ResponseEntity<?> downloadFile(@RequestParam("fileName") @NotBlank @NotNull String fileName) throws FileDownloadException, IOException {
         Object response = fileService.downloadFile(fileName);
-        if (response != null){
+        if (response != null) {
             return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"").body(response);
         } else {
             APIResponse apiResponse = APIResponse.builder()
@@ -91,9 +84,9 @@ public class FileController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> delete(@RequestParam("fileName") @NotBlank @NotNull String fileName){
+    public ResponseEntity<?> delete(@RequestParam("fileName") @NotBlank @NotNull String fileName) {
         boolean isDeleted = fileService.delete(fileName);
-        if (isDeleted){
+        if (isDeleted) {
             APIResponse apiResponse = APIResponse.builder().message("file deleted!")
                     .statusCode(200).build();
             return new ResponseEntity<>(apiResponse, HttpStatus.OK);
@@ -104,29 +97,21 @@ public class FileController {
         }
     }
 
-    private boolean isValidFile(MultipartFile multipartFile){
+    private boolean isValidFile(MultipartFile multipartFile) {
         log.info("Empty Status ==> {}", multipartFile.isEmpty());
-        if (Objects.isNull(multipartFile.getOriginalFilename())){
+        if (Objects.isNull(multipartFile.getOriginalFilename())) {
             return false;
         }
         return !multipartFile.getOriginalFilename().trim().equals("");
     }
 
-    private ResponseEntity<?> uploadFiles(boolean isValidFile ,MultipartFile multipartFile, List<String> extensions) throws IOException {
-        if (isValidFile && extensions.contains(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))){
-            String fileName = videoService.uploadFile(multipartFile);
-            APIResponse apiResponse = APIResponse.builder()
-                    .message("file uploaded successfully. File unique name =>" + fileName)
-                    .isSuccessful(true)
-                    .statusCode(200)
-                    .build();
+    private ResponseEntity<?> uploadFiles(boolean isValidFile, MultipartFile multipartFile, List<String> extensions) throws IOException {
+        if (isValidFile && extensions.contains(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))) {
+            APIResponse apiResponse = videoService.uploadVideo(multipartFile);
             return new ResponseEntity<>(apiResponse, HttpStatus.OK);
         } else {
-            APIResponse apiResponse = APIResponse.builder()
-                    .message("Invalid File. File extension or File name is not supported")
-                    .isSuccessful(false)
-                    .statusCode(400)
-                    .build();
+            APIResponse apiResponse = new APIResponse(null, null, Constants.INVALID_FILE,
+                    400, false);
             return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
         }
     }

@@ -1,11 +1,14 @@
 package com.video.streaming.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.video.streaming.Constants.Constants;
 import com.video.streaming.model.Video;
 import com.video.streaming.model.VideoDto;
 import com.video.streaming.repository.VideoRepository;
+import com.video.streaming.responses.APIResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -41,7 +44,7 @@ public class VideoService {
         // uploading file to S3
         PutObjectRequest request = new PutObjectRequest(bucketName, fileName, file);
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType("plain/" + FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
+        metadata.setContentType(multipartFile.getContentType());
         metadata.addUserMetadata("Title", "File Upload - " + fileName);
         metadata.setContentLength(file.length());
         request.setMetadata(metadata);
@@ -49,16 +52,25 @@ public class VideoService {
 
         // delete file
         file.delete();
-
-        return fileName;
+        return s3Client.getUrl(bucketName, fileName).toString();
     }
 
-    public String uploadThumbnail(MultipartFile file, String videoId) throws IOException {
+    public APIResponse uploadVideo(MultipartFile file) throws IOException {
+        String fileName = uploadFile(file);
+        Video video = new Video();
+        video.setVideoUrl(fileName);
+        videoRepository.save(video);
+        return new APIResponse(video.getId(), fileName, Constants.FILE_UPLOADED_SUCCESSFULLY,
+                200, true);
+    }
+
+    public APIResponse uploadThumbnail(MultipartFile file, String videoId) throws IOException {
         Video retrievedVideo = getVideoById(videoId);
         String fileName = uploadFile(file);
         retrievedVideo.setThumbnailUrl(fileName);
         videoRepository.save(retrievedVideo);
-        return fileName;
+        return new APIResponse(retrievedVideo.getId(), fileName, Constants.FILE_UPLOADED_SUCCESSFULLY,
+                200, true);
     }
 
     public Video editVideoMetaData(VideoDto videoDetails) {
